@@ -2,11 +2,16 @@ const axios = require("axios");
 const fs = require("fs");
 const stream = require("stream");
 const util = require("util");
+const ffmpeg = require("fluent-ffmpeg");
+
+// Environment Variables
+const elevenLabsToken = process.env.ELEVENLABS_TOKEN;
 
 // Convert fs.write into Promise version to handle async/await
 const pipeline = util.promisify(stream.pipeline);
 
-async function textToSpeech(text, voiceId) {
+const textToSpeech = async (text) => {
+  const voiceId = "pNInz6obpgDQGcFmaJgB"; // Replace 'your-voice-id' with the voice ID you want to use
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
   const data = {
     text: text,
@@ -20,19 +25,37 @@ async function textToSpeech(text, voiceId) {
     headers: {
       Accept: "audio/mpeg",
       "Content-Type": "application/json",
-      "xi-api-key": "59c0ffeccb9862e3c079eb85173d2aa2", // Usa la clave de API desde la variable de entorno
+      "xi-api-key": elevenLabsToken, // Use your own Eleven Labs API key
     },
-    responseType: "stream", // Para recibir los datos como un stream
+    responseType: "stream", // Important to set the response type to stream
   };
 
   try {
     const response = await axios.post(url, data, config);
     const timestamp = new Date().getTime();
-    await pipeline(response.data, fs.createWriteStream(`./temp/voice_audio_${timestamp}.mp3`));
+    const elevenLabsAudioRoute = `./temp/voice_audio_${timestamp}.mp3`;
+    const audioInOggFormat = `./temp/voice_audio_${timestamp}.ogg`;
+
+    await pipeline(response.data, fs.createWriteStream(elevenLabsAudioRoute));
     console.log(`Audio guardado en: /temp/voice_audio_${timestamp}.mp3`);
+
+    // now convert mp3 to ogg format
+    await convertMp3ToOgg(`./temp/voice_audio_${timestamp}.mp3`, `./temp/voice_audio_${timestamp}.ogg`);
+
+    // now delete mp3 file
+    fs.unlinkSync(`./temp/voice_audio_${timestamp}.mp3`);
+
+    return audioInOggFormat;
   } catch (error) {
     console.error(error);
   }
+};
+
+// Convert mp3 to ogg
+function convertMp3ToOgg(source, destination) {
+  return new Promise((resolve, reject) => {
+    ffmpeg(source).output(destination).on("end", resolve).on("error", reject).run();
+  });
 }
 
-textToSpeech("Hola, ¿cómo estás?", "pNInz6obpgDQGcFmaJgB"); // Reemplaza 'your-voice-id' con el id de voz que desees
+module.exports = { textToSpeech };

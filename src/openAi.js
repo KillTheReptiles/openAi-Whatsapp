@@ -1,9 +1,12 @@
 const axios = require("axios").default;
+const FormData = require("form-data");
 
 const openaiToken = process.env.OPENAI_TOKEN;
 const verifyToken = process.env.VERIFY_TOKEN;
+const token = process.env.WHATSAPP_TOKEN;
+
 // Transcribe audio using OpenAI API
-export const transcribeAudio = async (mediaId) => {
+const transcribeAudio = async (mediaId) => {
   try {
     const media = await axios({
       method: "GET",
@@ -47,7 +50,7 @@ export const transcribeAudio = async (mediaId) => {
 };
 
 // Get completion from ChatGPT
-export const chatgptCompletion = async (message) => {
+const chatgptCompletion = async (message) => {
   try {
     let openaiData = JSON.stringify({
       model: "gpt-3.5-turbo",
@@ -82,7 +85,7 @@ export const chatgptCompletion = async (message) => {
 };
 
 // Generate image using DALL-E model
-export const generateImageDalle = async (prompt) => {
+const generateImageDalle = async (prompt) => {
   try {
     const dalle = await axios({
       method: "POST",
@@ -105,3 +108,5 @@ export const generateImageDalle = async (prompt) => {
     throw error;
   }
 };
+
+module.exports = { chatgptCompletion, generateImageDalle, transcribeAudio };

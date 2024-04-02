@@ -2,9 +2,9 @@
   "name": "openapi-whatsapp",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node src/index.js"
   },
   "author": "WhatsApp",
   "license": "ISC",
@@ -12,8 +12,9 @@
     "axios": "^0.27.2",
     "body-parser": "^1.20.0",
     "express": "^4.18.1",
-    "request": "^2.88.2",
-    "form-data": "^4.0.0"
+    "fluent-ffmpeg": "^2.1.2",
+    "form-data": "^4.0.0",
+    "request": "^2.88.2"
   },
   "engines": {
     "node": "20"

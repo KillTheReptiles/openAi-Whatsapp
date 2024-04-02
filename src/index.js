@@ -1,10 +1,11 @@
-const { transcribeAudio, chatgptCompletion, generateImageDalle } = require("./openAi");
+const { textToSpeech } = require("./elevenLabs");
+const { sendMessage, sendImage, sendAudio } = require("./metaAPI");
+const { transcribeAudio, chatgptCompletion, generateImageDalle } = require("./openAI");
 
 // Dependencies
 const express = require("express");
 const bodyParser = require("body-parser");
-const axios = require("axios").default;
-const FormData = require("form-data");
+const fs = require("fs");
 
 // Initialize Express app
 const app = express().use(bodyParser.json());
@@ -56,13 +57,20 @@ app.post("/webhook", async (req, res) => {
 
           await sendMessage(phoneNumberId, from, "Procesando nota de voz. Espera...");
           let transcriptionResponse = await transcribeAudio(audioMessageId);
+
+          // this send a message to the user in WhatsApp to let them know that the transcription is being processed
           const transcription =
             '*Transcripción del audio:*\n\n"' +
             transcriptionResponse +
             '"\n\n_Estamos procesando tu mensaje con ChatGPT, tardará unos segundos..._';
           await sendMessage(phoneNumberId, from, transcription);
           const chatgptResponse = await chatgptCompletion(transcriptionResponse);
-          await sendMessage(phoneNumberId, from, chatgptResponse);
+
+          // this send the message to the user in WhatsApp in audio format
+
+          const audioResponseLocal = await textToSpeech(chatgptResponse);
+
+          await sendAudio(phoneNumberId, from, audioResponse);
         } else {
           console.log("Audio message already processed:", audioMessageId);
         }
@@ -72,4 +80,20 @@ app.post("/webhook", async (req, res) => {
   } else {
     res.sendStatus(404);
   }
+});
+
+// This is a endpoint to host the audio files
+
+app.get("/audio/:filename", (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, "temp", filename);
+  const stat = fs.statSync(filePath);
+
+  res.writeHead(200, {
+    "Content-Type": "audio/ogg",
+    "Content-Length": stat.size,
+  });
+
+  const readStream = fs.createReadStream(filePath);
+  readStream.pipe(res);
 });
