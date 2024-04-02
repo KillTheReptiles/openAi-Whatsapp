@@ -1,6 +1,6 @@
 const { textToSpeech } = require("./elevenLabs");
 const { sendMessage, sendImage, sendAudio } = require("./metaAPI");
-const { transcribeAudio, chatgptCompletion, generateImageDalle } = require("./openAI");
+const { transcribeAudio, chatgptCompletion, generateImageDalle } = require("./openAIServices");
 
 // Dependencies
 const express = require("express");
@@ -69,6 +69,8 @@ app.post("/webhook", async (req, res) => {
           // this send the message to the user in WhatsApp in audio format
 
           const audioResponseLocal = await textToSpeech(chatgptResponse);
+
+          //consumir mi endpoint que hostea la ruta del archivo de audio (esta en glitch)
 
           await sendAudio(phoneNumberId, from, audioResponse);
         } else {
