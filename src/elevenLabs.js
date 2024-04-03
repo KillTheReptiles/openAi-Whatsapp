@@ -51,6 +51,8 @@ const textToSpeech = async (text) => {
   }
 };
 
+textToSpeech("Hola, ¿cómo estás?").then((audio) => console.log(audio));
+
 // Convert mp3 to ogg
 function convertMp3ToOgg(source, destination) {
   return new Promise((resolve, reject) => {

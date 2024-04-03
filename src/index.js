@@ -67,7 +67,7 @@ app.post("/webhook", async (req, res) => {
           const chatgptResponse = await chatgptCompletion(transcriptionResponse);
 
           // this send the message to the user in WhatsApp in audio format
-
+          console.log("TEST VARIABLES entorno Y AUDIO", process.env.ELEVENLABS_TOKEN);
           const audioResponseLocal = await textToSpeech(chatgptResponse);
 
           //consumir mi endpoint que hostea la ruta del archivo de audio (esta en glitch)
