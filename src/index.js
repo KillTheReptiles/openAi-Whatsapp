@@ -72,7 +72,7 @@ app.post("/webhook", async (req, res) => {
 
           //consumir mi endpoint que hostea la ruta del archivo de audio (esta en glitch)
 
-          await sendAudio(phoneNumberId, from, audioResponse);
+          await sendMessage(phoneNumberId, from, audioResponseLocal);
         } else {
           console.log("Audio message already processed:", audioMessageId);
         }
