@@ -11,7 +11,7 @@ const fs = require("fs");
 const app = express().use(bodyParser.json());
 
 // Set up webhook endpoint
-app.listen(process.env.PORT || 1337, () => console.log("Webhook is listening"));
+app.listen(process.env.PORT || 1337, () => console.log("Webhook is listening render.com"));
 // Initialize array to keep track of processed audio message IDs
 let processedAudioMessages = [];
 
