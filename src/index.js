@@ -1,7 +1,8 @@
 const { textToSpeech } = require("./elevenLabs");
 const { sendMessage, sendImage, sendAudio } = require("./metaAPI");
 const { transcribeAudio, chatgptCompletion, generateImageDalle } = require("./openAIServices");
-
+//dotenv
+require("dotenv").config();
 // Dependencies
 const express = require("express");
 const bodyParser = require("body-parser");
