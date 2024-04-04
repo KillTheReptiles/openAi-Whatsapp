@@ -12,10 +12,9 @@ const fs = require("fs");
 const app = express().use(bodyParser.json());
 
 // Set up webhook endpoint
-app.listen(process.env.PORT || 1337, () => console.log("Webhook is listening render.com"));
+app.listen(process.env.PORT || 3000, () => console.log("Webhook is listening"));
 // Initialize array to keep track of processed audio message IDs
 let processedAudioMessages = [];
-
 // Handle POST requests at /webhook endpoint
 app.post("/webhook", async (req, res) => {
   let body = req.body;
@@ -68,12 +67,11 @@ app.post("/webhook", async (req, res) => {
           const chatgptResponse = await chatgptCompletion(transcriptionResponse);
 
           // this send the message to the user in WhatsApp in audio format
-          console.log("TEST VARIABLES entorno Y AUDIO", process.env.ELEVENLABS_TOKEN);
-          const audioResponseLocal = await textToSpeech(chatgptResponse);
 
+          const audioResponseLocal = await textToSpeech(chatgptResponse);
           //consumir mi endpoint que hostea la ruta del archivo de audio (esta en glitch)
 
-          await sendMessage(phoneNumberId, from, audioResponseLocal);
+          await sendAudio(phoneNumberId, from, audioResponseLocal);
         } else {
           console.log("Audio message already processed:", audioMessageId);
         }
@@ -86,25 +84,16 @@ app.post("/webhook", async (req, res) => {
 });
 
 app.get("/webhook", (req, res) => {
-  const verify_token = process.env.VERIFY_TOKEN;
+  const challenge = req.query["hub.challenge"];
+  const verify_token = req.query["hub.verify_token"];
 
-  // Parse params from the webhook verification request
-  let mode = req.query["hub.mode"];
-  let token = req.query["hub.verify_token"];
-  let challenge = req.query["hub.challenge"];
+  console.log("challenge", challenge);
+  console.log("verify_token", verify_token);
 
-  // Check if a token and mode were sent
-  if (mode && token) {
-    // Check the mode and token sent are correct
-    if (mode === "subscribe" && token === verify_token) {
-      // Respond with 200 OK and challenge token from the request
-      console.log("WEBHOOK_VERIFIED");
-      res.status(200).send(challenge);
-    } else {
-      // Responds with '403 Forbidden' if verify tokens do not match
-      res.sendStatus(403);
-    }
+  if (verify_token === process.env.VERIFY_TOKEN) {
+    return res.status(200).send(challenge); // Just the challenge
   }
+  return res.status(400).send({ message: "Bad request!" });
 });
 
 // This is a endpoint to host the audio files
