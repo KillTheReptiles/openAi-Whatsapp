@@ -30,7 +30,7 @@ const textToSpeech = async (text) => {
       headers: {
         Accept: "audio/mpeg",
         "Content-Type": "application/json",
-        "xi-api-key": elevenLabsToken, // Usa tu propia clave de API de Eleven Labs
+        "xi-api-key": "59c0ffeccb9862e3c079eb85173d2aa2", // Usa tu propia clave de API de Eleven Labs
       },
       responseType: "stream", // Es importante configurar el tipo de respuesta como stream
     };
@@ -90,6 +90,8 @@ const textToSpeech = async (text) => {
     throw error; // Lanza el error para que pueda ser manejado adecuadamente por el llamador
   }
 };
+
+textToSpeech("Hola, ¿cómo estásSSSSSSSSSSSSSS?");
 
 // Convert mp3 to ogg
 function convertMp3ToOgg(source, destination) {
