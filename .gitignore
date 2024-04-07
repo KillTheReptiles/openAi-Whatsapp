@@ -1,4 +1,4 @@
 node_modules/
 src/temp/*
 .env
-src/database/serviceAccountKey.json
+serviceAccountKey.json
