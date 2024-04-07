@@ -51,10 +51,11 @@ const textToSpeech = async (text) => {
     // Elimina el archivo mp3
     fs.unlinkSync(audioFilePath);
 
-    // Lee el archivo de audio en formato ogg
+    // // Lee el archivo de audio en formato ogg
     const audioData = fs.readFileSync(oggFilePath);
 
     // Sube el archivo de audio a Firebase Storage
+    console.log("Subiendo archivo de audio a Firebase Storage...");
     const fileName = `voice_audio_${timestamp}.ogg`;
     const fileUpload = bucket.file(fileName);
     const stream = fileUpload.createWriteStream({
@@ -81,7 +82,7 @@ const textToSpeech = async (text) => {
     });
 
     // Elimina el archivo ogg temporal
-    fs.unlinkSync(oggFilePath);
+    // fs.unlinkSync(oggFilePath);
   } catch (error) {
     console.error("Error en la función textToSpeech:", error);
     throw error; // Lanza el error para que pueda ser manejado adecuadamente por el llamador

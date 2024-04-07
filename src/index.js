@@ -56,7 +56,9 @@ app.post("/webhook", async (req, res) => {
           processedAudioMessages.push(audioMessageId);
 
           await sendMessage(phoneNumberId, from, "Procesando nota de voz. Espera...");
-          let transcriptionResponse = await transcribeAudio(audioMessageId);
+          let transcriptionResponse = "Transcripción de test sin open ai";
+
+          //await transcribeAudio(audioMessageId);
 
           // this send a message to the user in WhatsApp to let them know that the transcription is being processed
           const transcription =
