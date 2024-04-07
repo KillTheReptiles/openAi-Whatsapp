@@ -30,7 +30,7 @@ const textToSpeech = async (text) => {
       headers: {
         Accept: "audio/mpeg",
         "Content-Type": "application/json",
-        "xi-api-key": "59c0ffeccb9862e3c079eb85173d2aa2", // Usa tu propia clave de API de Eleven Labs
+        "xi-api-key": "302c21171ae95ce40ba3570b1ac587c6", // Usa tu propia clave de API de Eleven Labs
       },
       responseType: "stream", // Es importante configurar el tipo de respuesta como stream
     };
