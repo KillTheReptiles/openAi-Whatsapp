@@ -9,6 +9,8 @@ require("dotenv").config();
 // Environment Variables
 const elevenLabsToken = process.env.ELEVENLABS_TOKEN;
 
+console.log("TOKEN DE ELEVEN:", elevenLabsToken);
+
 // Convert fs.write into Promise version to handle async/await
 const pipeline = util.promisify(stream.pipeline);
 
