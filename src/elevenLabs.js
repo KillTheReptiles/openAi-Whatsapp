@@ -87,11 +87,9 @@ const textToSpeech = async (text) => {
     // fs.unlinkSync(oggFilePath);
   } catch (error) {
     console.error("Error en la función textToSpeech:", error);
-    throw error; // Lanza el error para que pueda ser manejado adecuadamente por el llamador
+    // throw error; // Lanza el error para que pueda ser manejado adecuadamente por el llamador
   }
 };
-
-textToSpeech("Hola, ¿cómo estásSSSSSSSSSSSSSS?");
 
 // Convert mp3 to ogg
 function convertMp3ToOgg(source, destination) {
