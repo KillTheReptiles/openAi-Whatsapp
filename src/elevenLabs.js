@@ -86,7 +86,11 @@ const textToSpeech = async (text) => {
     // Elimina el archivo ogg temporal
     // fs.unlinkSync(oggFilePath);
   } catch (error) {
-    console.error("Error en la función textToSpeech:", error);
+    if (error && typeof error === "object" && error.message) {
+      console.log("Mensaje de error:", error.message);
+    } else {
+      console.log("No se pudo encontrar un mensaje de error en el objeto.");
+    }
     // throw error; // Lanza el error para que pueda ser manejado adecuadamente por el llamador
   }
 };
