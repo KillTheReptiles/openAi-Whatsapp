@@ -16,8 +16,8 @@ const pipeline = util.promisify(stream.pipeline);
 
 const textToSpeech = async (text) => {
   try {
-    const voiceId = "pNInz6obpgDQGcFmaJgB"; // Reemplaza 'tu-voice-id' con el ID de voz que desees usar
-    const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
+    const voiceId = "21m00Tcm4TlvDq8ikWAM"; // Reemplaza 'tu-voice-id' con el ID de voz que desees usar
+    const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`;
     const data = {
       text: text,
       model_id: "eleven_monolingual_v1",

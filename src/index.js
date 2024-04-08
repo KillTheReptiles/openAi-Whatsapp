@@ -11,6 +11,8 @@ const fs = require("fs");
 // Initialize Express app
 const app = express().use(bodyParser.json());
 
+textToSpeech("Hola, esto es una prueba de texto a voz con Eleven Labs");
+
 // Set up webhook endpoint
 app.listen(process.env.PORT || 3000, () => console.log("Webhook is listening"));
 // Initialize array to keep track of processed audio message IDs
