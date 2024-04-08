@@ -73,7 +73,8 @@ app.post("/webhook", async (req, res) => {
           const audioResponseLocal = await textToSpeech(chatgptResponse);
           //consumir mi endpoint que hostea la ruta del archivo de audio (esta en glitch)
 
-          await sendAudio(phoneNumberId, from, audioResponseLocal);
+          // await sendAudio(phoneNumberId, from, audioResponseLocal);
+          await sendMessage(phoneNumberId, from, "procesado elevenlabs");
         } else {
           console.log("Audio message already processed:", audioMessageId);
         }
