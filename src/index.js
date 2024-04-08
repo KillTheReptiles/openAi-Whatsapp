@@ -103,16 +103,7 @@ app.get("/webhook", (req, res) => {
 
 // This is a endpoint to host the audio files
 
-app.get("/audio/:filename", (req, res) => {
-  const filename = req.params.filename;
-  const filePath = path.join(__dirname, "temp", filename);
-  const stat = fs.statSync(filePath);
-
-  res.writeHead(200, {
-    "Content-Type": "audio/ogg",
-    "Content-Length": stat.size,
-  });
-
-  const readStream = fs.createReadStream(filePath);
-  readStream.pipe(res);
+app.get("/audio/", async (req, res) => {
+  const audioResponseLocal = await textToSpeech("ESTO ES UNA PRUEBA DE ERROR ELEVENLABS");
+  console.log("audioResponseLocal", audioResponseLocal);
 });
