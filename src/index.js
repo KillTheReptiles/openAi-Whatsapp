@@ -106,4 +106,5 @@ app.get("/webhook", (req, res) => {
 app.get("/audio/", async (req, res) => {
   const audioResponseLocal = await textToSpeech("ESTO ES UNA PRUEBA DE ERROR ELEVENLABS");
   console.log("audioResponseLocal", audioResponseLocal);
+  return res.status(200).send(audioResponseLocal);
 });
