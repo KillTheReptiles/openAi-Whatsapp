@@ -4,7 +4,8 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
   },
   "author": "WhatsApp",
   "license": "ISC",
@@ -19,6 +20,6 @@
     "request": "^2.88.2"
   },
   "engines": {
-    "node": "20"
+    "node": "18"
   }
 }
