@@ -6,7 +6,7 @@ const ffmpeg = require("fluent-ffmpeg");
 const os = require("os");
 const path = require("path");
 const { ElevenLabsClient } = require("elevenlabs");
-const { bucket } = require("./database/storage");
+const { bucket } = require("./database/config");
 require("dotenv").config();
 
 // Environment Variables

@@ -1,4 +1,5 @@
 node_modules/
-src/temp/*
+functions/temp/*
 .env
 serviceAccountKey.json
+functions/authorized_numbers.json

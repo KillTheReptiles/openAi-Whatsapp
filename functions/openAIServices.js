@@ -92,8 +92,8 @@ const generateImageDalle = async (prompt) => {
       url: "https://api.openai.com/v1/images/generations",
       data: {
         prompt,
-        n: 3,
-        size: "512x512",
+        n: 1,
+        size: "1024x1024",
         response_format: "url",
       },
       headers: {
