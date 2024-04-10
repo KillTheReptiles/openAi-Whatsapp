@@ -1,4 +1,3 @@
-const authorizedUsers = require("../authorized_numbers.json");
 const { updateDocument, createDocument, getDocument, getDocuments, getDocumentsWhere } = require("../database/querys");
 
 exports.updateAttempts = async (req, res) => {
@@ -26,8 +25,10 @@ exports.getAttempts = async (req, res) => {
     const body = req.body;
 
     // verify if the number is in the authorized users
-    const user = await getDocumentsWhere("users", [{ field: "phoneNumber", operator: "==", value: body.phoneNumber }]);
-    if (!user[0]) {
+    let user = await getDocumentsWhere("users", [{ field: "phoneNumber", operator: "==", value: body.phoneNumber }]);
+    user = user[0]; // get the first element of the array (if exists) because the function returns an array
+
+    if (!user) {
       return res
         .status(401)
         .send(`El numero de celular ${body.phoneNumber} no existe en la lista de usuarios autorizados`);
@@ -49,9 +50,10 @@ exports.addUser = async (req, res) => {
     const body = req.body;
 
     // verify if the number is in the authorized users
-    const user = await getDocumentsWhere("users", [{ field: "phoneNumber", operator: "==", value: body.phoneNumber }]);
-    console.log("user", user);
-    if (user[0]) {
+    let user = await getDocumentsWhere("users", [{ field: "phoneNumber", operator: "==", value: body.phoneNumber }]);
+    user = user[0]; // get the first element of the array (if exists) because the function returns an array
+
+    if (user) {
       return res.status(401).send(`El numero de celular ${body.phoneNumber} no se puede crear de nuevo`);
     }
 
@@ -59,7 +61,7 @@ exports.addUser = async (req, res) => {
     return res
       .status(200)
       .send(
-        `El numero de celular ${body.phoneNumber} ha sido agregado a la lista de usuarios autorizados con ${body.Attempts} intentos ${user.Attemps} intentos`
+        `El numero de celular ${body.phoneNumber} ha sido agregado a la lista de usuarios autorizados con ${body.Attempts} intentos ${user.Attempts} intentos`
       );
   } catch (error) {
     console.log(error);

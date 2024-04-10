@@ -3,7 +3,7 @@ const { sendMessage, sendImage, sendAudio } = require("../metaAPI");
 const { transcribeAudio, chatgptCompletion, generateImageDalle } = require("../openAIServices");
 const { updateDocument, getDocumentsWhere } = require("../database/querys");
 
-const authorizedUsers = require("../authorized_numbers.json");
+const globalAttempts = require("../config/globalAttempts");
 
 //dotenv
 require("dotenv").config();
@@ -15,6 +15,7 @@ exports.handleWebhook = async (req, res) => {
   let body = req.body;
 
   // console.log(JSON.stringify(req.body, null, 2));
+  const phoneNumberUser = null;
   try {
     if (req.body.object) {
       if (
@@ -37,16 +38,16 @@ exports.handleWebhook = async (req, res) => {
           await sendMessage(phoneNumberId, from, "No estás autorizado para usar este servicio");
           return res.sendStatus(200);
         }
-        // Podria por ejemplo restar un uso por texto, 5 usos por audio y 10 usos por imagen
+
         if (messageType === "text") {
-          if (user.Attempts < 1) {
+          if (user.Attempts < globalAttempts.textAttempt) {
             await sendMessage(phoneNumberId, from, "No tienes más intentos disponibles");
             return res.sendStatus(200);
           }
           let msgBody = req.body.entry[0].changes[0].value.messages[0].text.body;
 
           if (msgBody.startsWith("/imagina ")) {
-            if (user.Attempts < 10) {
+            if (user.Attempts < globalAttempts.imageAttempt) {
               await sendMessage(
                 phoneNumberId,
                 from,
@@ -55,21 +56,31 @@ exports.handleWebhook = async (req, res) => {
               return res.sendStatus(200);
             }
             const extractedText = msgBody.substring("/imagina ".length);
+            await sendMessage(
+              phoneNumberId,
+              from,
+              ` Tienes ${user.Attempts} intentos disponibles y se te descontaran ${globalAttempts.textAttempt}.  Por favor, espera mientras generamos tu imagen...`
+            );
             const images = await generateImageDalle(extractedText);
 
             for (const image of images) {
               sendImage(phoneNumberId, from, image.url);
             }
             // substract 10 Attempts
-            await updateDocument("users", user.id, { Attempts: user.Attempts - 10 }); // TODO: change the 10 to a variable
+            await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.imageAttempt });
           } else {
+            await sendMessage(
+              phoneNumberId,
+              from,
+              `Tienes ${user.Attempts} intentos disponibles y se te descontaran ${globalAttempts.textAttempt}. Por favor, espera mientras procesamos tu mensaje...`
+            );
             const chatgptResponse = await chatgptCompletion(msgBody);
             await sendMessage(phoneNumberId, from, chatgptResponse);
             // substract 1 Attempts
-            await updateDocument("users", user.id, { Attempts: user.Attempts - 1 }); //TODO: change the 1 to a variable
+            await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.textAttempt });
           }
         } else if (messageType === "audio") {
-          if (user.Attempts < 5) {
+          if (user.Attempts < globalAttempts.audioAttempt) {
             await sendMessage(
               phoneNumberId,
               from,
@@ -84,7 +95,11 @@ exports.handleWebhook = async (req, res) => {
             // Add the ID to the processed list
             processedAudioMessages.push(audioMessageId);
 
-            await sendMessage(phoneNumberId, from, "Procesando nota de voz. Espera...");
+            await sendMessage(
+              phoneNumberId,
+              from,
+              `Tienes ${user.Attempts} intentos disponibles y se te descontaran ${globalAttempts.audioAttempt} si un audio es enviado. Por favor, espera mientras procesamos tu mensaje...`
+            );
             // let transcriptionResponse = "Transcripción de test sin open ai";
 
             let transcriptionResponse = await transcribeAudio(audioMessageId);
@@ -95,25 +110,26 @@ exports.handleWebhook = async (req, res) => {
               transcriptionResponse +
               '"\n\nEstamos procesando tu mensaje con ChatGPT, tardará unos segundos...';
             await sendMessage(phoneNumberId, from, transcription);
+
+            // function to convert the text to audio
+
             const chatgptResponse = await chatgptCompletion(transcriptionResponse);
-
-            // this send the message to the user in WhatsApp in audio format
-            console.log("chatgptResponse", chatgptResponse);
-            const audioResponseLocal = await textToSpeech(chatgptResponse);
-            //consumir mi endpoint que hostea la ruta del archivo de audio (esta en glitch)
-
-            console.log("audioResponseLocal", audioResponseLocal);
-
-            // await sendAudio(phoneNumberId, from, audioResponseLocal);
-            await sendAudio(phoneNumberId, from, audioResponseLocal);
+            try {
+              const audioResponseLocal = await textToSpeech(chatgptResponse);
+              await sendAudio(phoneNumberId, from, audioResponseLocal);
+            } catch (error) {
+              // If an error occurs during text to audio conversion, send a text message instead
+              await sendMessage(phoneNumberId, from, chatgptResponse);
+              console.error("Error occurred while generating audio response:", error);
+            }
             // substract 5 Attempts
-            await updateDocument("users", user.id, { Attempts: user.Attempts - 5 }); //TODO: change the 5 to a variable
+            await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.audioAttempt });
           } else {
             console.log("Audio message already processed:", audioMessageId);
           }
         }
+        return res.sendStatus(200);
       }
-      return res.sendStatus(200).send("Event received");
     } else {
       return res.sendStatus(200).send("No object found in request body");
     }
