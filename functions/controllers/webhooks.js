@@ -2,6 +2,8 @@ const { textToSpeech } = require("../elevenLabs");
 const { sendMessage, sendImage, sendAudio } = require("../metaAPI");
 const { transcribeAudio, chatgptCompletion, generateImageDalle } = require("../openAIServices");
 const { updateDocument, getDocumentsWhere } = require("../database/querys");
+const { ref, deleteObject } = require("firebase-admin");
+const { bucket } = require("../database/config");
 
 const globalAttempts = require("../config/globalAttempts");
 
@@ -31,7 +33,6 @@ exports.handleWebhook = async (req, res) => {
 
         // Check if the user exists
         let user = await getDocumentsWhere("users", [{ field: "phoneNumber", operator: "==", value: from }]);
-        console.log("from", from, " ", user);
         user = user[0]; // get the first element of the array (if exists) because the function returns an array
 
         if (!user) {
@@ -55,11 +56,12 @@ exports.handleWebhook = async (req, res) => {
               );
               return res.sendStatus(200);
             }
+
             const extractedText = msgBody.substring("/imagina ".length);
             await sendMessage(
               phoneNumberId,
               from,
-              ` Tienes ${user.Attempts} intentos disponibles y se te descontaran ${globalAttempts.textAttempt}.  Por favor, espera mientras generamos tu imagen...`
+              `🎨 La creatividad no entiende de prisas \n🖌️ ¡Gracias por tu paciencia!. \nTu saldo actual es ${user.Attempts} - ${globalAttempts.imageAttempt} EduCoins por tu imagen.`
             );
             const images = await generateImageDalle(extractedText);
 
@@ -68,16 +70,18 @@ exports.handleWebhook = async (req, res) => {
             }
             // substract 10 Attempts
             await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.imageAttempt });
+            return res.sendStatus(200);
           } else {
+            const chatgptResponse = await chatgptCompletion(msgBody);
             await sendMessage(
               phoneNumberId,
               from,
-              `Tienes ${user.Attempts} intentos disponibles y se te descontaran ${globalAttempts.textAttempt}. Por favor, espera mientras procesamos tu mensaje...`
+              chatgptResponse +
+                `\n\nTu saldo actual es ${user.Attempts} -${globalAttempts.textAttempt} EduCoins por Texto.`
             );
-            const chatgptResponse = await chatgptCompletion(msgBody);
-            await sendMessage(phoneNumberId, from, chatgptResponse);
             // substract 1 Attempts
             await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.textAttempt });
+            return res.sendStatus(200);
           }
         } else if (messageType === "audio") {
           if (user.Attempts < globalAttempts.audioAttempt) {
@@ -95,35 +99,38 @@ exports.handleWebhook = async (req, res) => {
             // Add the ID to the processed list
             processedAudioMessages.push(audioMessageId);
 
-            await sendMessage(
-              phoneNumberId,
-              from,
-              `Tienes ${user.Attempts} intentos disponibles y se te descontaran ${globalAttempts.audioAttempt} si un audio es enviado. Por favor, espera mientras procesamos tu mensaje...`
-            );
-            // let transcriptionResponse = "Transcripción de test sin open ai";
-
             let transcriptionResponse = await transcribeAudio(audioMessageId);
 
             // this send a message to the user in WhatsApp to let them know that the transcription is being processed
-            const transcription =
-              '*Transcripción del audio:*\n\n"' +
-              transcriptionResponse +
-              '"\n\nEstamos procesando tu mensaje con ChatGPT, tardará unos segundos...';
+            const transcription = `Transcripción del audio: \n${transcriptionResponse} \n\n🎧 Estamos procesando tu audio \n🎤 Tu paciencia es música para mis oídos \nTu saldo actual es ${user.Attempts} -${globalAttempts.audioAttempt} EduCoins por Audio.`;
             await sendMessage(phoneNumberId, from, transcription);
 
             // function to convert the text to audio
-
             const chatgptResponse = await chatgptCompletion(transcriptionResponse);
             try {
               const audioResponseLocal = await textToSpeech(chatgptResponse);
-              await sendAudio(phoneNumberId, from, audioResponseLocal);
+              await sendAudio(phoneNumberId, from, audioResponseLocal.urlPromise);
+
+              // delete the audio from firebase storage
+              const file = bucket.file(audioResponseLocal.fileName);
+              file
+                .delete()
+                .then(() => {
+                  console.log("Archivo borrado exitosamente");
+                })
+                .catch((error) => {
+                  console.error("Ocurrió un error:", error);
+                });
+
+              // substract 5 Attempts
+              await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.audioAttempt });
+              return res.sendStatus(200);
             } catch (error) {
               // If an error occurs during text to audio conversion, send a text message instead
               await sendMessage(phoneNumberId, from, chatgptResponse);
               console.error("Error occurred while generating audio response:", error);
+              return res.sendStatus(200);
             }
-            // substract 5 Attempts
-            await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.audioAttempt });
           } else {
             console.log("Audio message already processed:", audioMessageId);
           }

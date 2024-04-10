@@ -22,7 +22,7 @@ const textToSpeech = async (textAPI) => {
     });
 
     const audio = await elevenlabs.generate({
-      voice: "Rachel",
+      voice: "Harry",
       text: "" + textAPI,
       model_id: "eleven_multilingual_v2",
     });
@@ -69,7 +69,7 @@ const textToSpeech = async (textAPI) => {
     // Elimina los archivos temporales
     fs.unlinkSync(audioFilePath);
     fs.unlinkSync(oggFilePath);
-    return urlPromise;
+    return { urlPromise, fileName };
   } catch (error) {
     console.error("Error en la función textToSpeech:");
     throw error;
