@@ -118,45 +118,49 @@ exports.handleWebhook = async (req, res) => {
           // function to convert the text to audio
           const chatgptResponse = await chatgptCompletion(transcriptionResponse);
           console.log("chatgptResponse", chatgptResponse);
-          try {
-            const audioResponseLocal = await textToSpeech(chatgptResponse);
-            const isAudioSent = await sendAudio(phoneNumberId, from, audioResponseLocal.urlPromise);
 
-            if (isAudioSent) {
-              // Si el audio se ha enviado correctamente, eliminar el archivo
-              const file = bucket.file(audioResponseLocal.fileName);
-              file
-                .delete()
-                .then(() => {
-                  console.log("Archivo borrado exitosamente");
-                })
-                .catch((error) => {
-                  console.error("Error occured while deleting audio in firestore:", error);
-                });
-            } else {
-              // Si ha ocurrido un error, no eliminar el archivo
-              console.log("El audio no se ha enviado correctamente, no se eliminará el archivo");
-            }
+          const audioResponsePromise = new Promise((resolve, reject) => {
+            textToSpeech(chatgptResponse)
+              .then((audioResponseLocal) => {
+                resolve(audioResponseLocal);
+              })
+              .catch((error) => {
+                reject(error);
+              });
+          });
 
-            // substract Attempts
-            await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.audioAttempt });
-            res.sendStatus(200);
-            return;
-          } catch (error) {
-            // If an error occurs during text to audio conversion, send a text message instead
-            await sendMessage(phoneNumberId, from, chatgptResponse);
-            console.error("Error occurred while generating audio response:", error);
-            res.sendStatus(200);
-            return;
-          }
+          audioResponsePromise
+            .then(async (audioResponseLocal) => {
+              const isAudioSent = await sendAudio(phoneNumberId, from, audioResponseLocal.urlPromise);
+              if (isAudioSent) {
+                console.log("Audio enviado correctamente");
+                // substract Attempts
+                await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.audioAttempt });
+              } else {
+                // Si ha ocurrido un error, no eliminar el archivo
+                console.log("El audio no se ha enviado correctamente, no se eliminará el archivo");
+                await sendMessage(phoneNumberId, from, chatgptResponse);
+                res.sendStatus(200);
+                return;
+              }
+            })
+            .catch(async (error) => {
+              // Aquí puedes manejar cualquier error que ocurra durante el proceso
+              console.error(error);
+              // If an error occurs during text to audio conversion, send a text message instead
+              await sendMessage(phoneNumberId, from, chatgptResponse);
+              console.error("Error occurred while generating audio response:", error);
+              res.sendStatus(200);
+              return;
+            });
+          res.sendStatus(200);
+          return;
         } else {
           console.log("Audio message already processed:", audioMessageId);
           res.sendStatus(200);
           return;
         }
       }
-      res.sendStatus(200);
-      return;
     }
   } catch (error) {
     console.error(error);

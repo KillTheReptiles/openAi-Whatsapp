@@ -61,7 +61,7 @@ exports.addUser = async (req, res) => {
     return res
       .status(200)
       .send(
-        `El numero de celular ${body.phoneNumber} ha sido agregado a la lista de usuarios autorizados con ${body.Attempts} intentos ${user.Attempts} intentos`
+        `El numero de celular ${body.phoneNumber} ha sido agregado a la lista de usuarios autorizados con ${body.Attempts} intentos`
       );
   } catch (error) {
     console.log(error);

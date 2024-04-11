@@ -38,6 +38,7 @@ const textToSpeech = async (textAPI) => {
 
     // Convierte el audio de mp3 a ogg
     await convertMp3ToOgg(audioFilePath, oggFilePath);
+    console.log(`Audio en ogg guardado en: ${oggFilePath}`);
 
     // Sube el archivo de audio a Firebase Storage sin guardar localmente
     console.log("Subiendo archivo de audio a Firebase Storage...");
@@ -77,10 +78,16 @@ const textToSpeech = async (textAPI) => {
 };
 
 // Convert mp3 to ogg
-function convertMp3ToOgg(source, destination) {
-  return new Promise((resolve, reject) => {
-    ffmpeg(source).audioCodec("opus").output(destination).on("end", resolve).on("error", reject).run();
-  });
-}
+const convertMp3ToOgg = async (source, destination) => {
+  console.log("Converting mp3 to ogg...");
+  try {
+    await new Promise((resolve, reject) => {
+      ffmpeg(source).audioCodec("opus").output(destination).on("end", resolve).on("error", reject).run();
+    });
+    console.log("Conversion completed successfully");
+  } catch (error) {
+    console.error("Error during conversion:", error);
+  }
+};
 
 module.exports = { textToSpeech };

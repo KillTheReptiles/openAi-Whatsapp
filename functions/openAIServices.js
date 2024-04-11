@@ -2,7 +2,6 @@ const axios = require("axios").default;
 const FormData = require("form-data");
 
 const openaiToken = process.env.OPENAI_TOKEN;
-const verifyToken = process.env.VERIFY_TOKEN;
 const token = process.env.WHATSAPP_TOKEN;
 
 // Transcribe audio using OpenAI API
@@ -45,7 +44,7 @@ const transcribeAudio = async (mediaId) => {
     return openaiTranscription.data.text;
   } catch (error) {
     console.error(error);
-    throw error;
+    throw new Error(error);
   }
 };
 
@@ -80,7 +79,7 @@ const chatgptCompletion = async (message) => {
     return completion.data.choices[0].message.content;
   } catch (error) {
     console.error(error);
-    throw error;
+    throw new Error(error);
   }
 };
 
@@ -106,7 +105,7 @@ const generateImageDalle = async (prompt) => {
     return dalle.data.data;
   } catch (error) {
     console.error(error);
-    throw error;
+    throw new Error(error);
   }
 };
 
