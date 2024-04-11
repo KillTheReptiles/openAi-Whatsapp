@@ -8,7 +8,7 @@ const sendMessage = async (phoneNumberId, to, text) => {
   try {
     axios({
       method: "POST",
-      url: `https://graph.facebook.com/v17.0/${phoneNumberId}/messages?access_token=${token}`,
+      url: `https://graph.facebook.com/v19.0/${phoneNumberId}/messages?access_token=${token}`,
       data: {
         messaging_product: "whatsapp",
         to,
@@ -22,12 +22,11 @@ const sendMessage = async (phoneNumberId, to, text) => {
   }
 };
 
-// send audio message to whatsapp
 const sendAudio = async (phoneNumberId, to, audioUrl) => {
   try {
-    await axios({
+    const response = await axios({
       method: "POST",
-      url: `https://graph.facebook.com/v17.0/${phoneNumberId}/messages?access_token=${token}`,
+      url: `https://graph.facebook.com/v19.0/${phoneNumberId}/messages?access_token=${token}`,
       data: {
         messaging_product: "whatsapp",
         recipient_type: "individual",
@@ -37,9 +36,17 @@ const sendAudio = async (phoneNumberId, to, audioUrl) => {
       },
       headers: { "Content-Type": "application/json" },
     });
+
+    if (response.status === 200) {
+      console.log("Audio sent to whatsapp");
+      return true;
+    } else {
+      console.log("Audio not sent to whatsapp");
+      return false;
+    }
   } catch (error) {
-    console.error(error);
-    // Aquí puedes manejar el error como mejor te parezca
+    console.error("sendAudio error", error);
+    return false;
   }
 };
 
@@ -48,7 +55,7 @@ const sendImage = (phoneNumberId, to, imageUrl) => {
   try {
     axios({
       method: "POST",
-      url: `https://graph.facebook.com/v17.0/${phoneNumberId}/messages?access_token=${token}`,
+      url: `https://graph.facebook.com/v19.0/${phoneNumberId}/messages?access_token=${token}`,
       data: {
         messaging_product: "whatsapp",
         to,

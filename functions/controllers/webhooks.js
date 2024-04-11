@@ -12,12 +12,12 @@ require("dotenv").config();
 
 // Initialize array to keep track of processed audio message IDs
 let processedAudioMessages = [];
+
 // Handle POST requests at /webhook endpoint
 exports.handleWebhook = async (req, res) => {
   let body = req.body;
 
   // console.log(JSON.stringify(req.body, null, 2));
-  const phoneNumberUser = null;
   try {
     if (req.body.object) {
       if (
@@ -37,13 +37,15 @@ exports.handleWebhook = async (req, res) => {
 
         if (!user) {
           await sendMessage(phoneNumberId, from, "No estás autorizado para usar este servicio");
-          return res.sendStatus(200);
+          res.sendStatus(200);
+          return;
         }
 
         if (messageType === "text") {
           if (user.Attempts < globalAttempts.textAttempt) {
-            await sendMessage(phoneNumberId, from, "No tienes más intentos disponibles");
-            return res.sendStatus(200);
+            await sendMessage(phoneNumberId, from, "No tienes más EduCoins disponibles");
+            res.sendStatus(200);
+            return;
           }
           let msgBody = req.body.entry[0].changes[0].value.messages[0].text.body;
 
@@ -52,66 +54,76 @@ exports.handleWebhook = async (req, res) => {
               await sendMessage(
                 phoneNumberId,
                 from,
-                "No tienes suficientes intentos disponibles para generar imágenes"
+                "No tienes suficientes EduCoins disponibles para generar imágenes"
               );
-              return res.sendStatus(200);
+              res.sendStatus(200);
+              return;
             }
 
             const extractedText = msgBody.substring("/imagina ".length);
             await sendMessage(
               phoneNumberId,
               from,
-              `🎨 La creatividad no entiende de prisas \n🖌️ ¡Gracias por tu paciencia!. \nTu saldo actual es ${user.Attempts} - ${globalAttempts.imageAttempt} EduCoins por tu imagen.`
+              `🎨 La creatividad no entiende de prisas \n🖌️ ¡Gracias por tu paciencia!. \nTu saldo actual es ${user.Attempts}-${globalAttempts.imageAttempt} EduCoins por imagen.`
             );
             const images = await generateImageDalle(extractedText);
 
             for (const image of images) {
               sendImage(phoneNumberId, from, image.url);
             }
-            // substract 10 Attempts
+            // substract Attempts
             await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.imageAttempt });
-            return res.sendStatus(200);
+            res.sendStatus(200);
+            return;
           } else {
             const chatgptResponse = await chatgptCompletion(msgBody);
             await sendMessage(
               phoneNumberId,
               from,
               chatgptResponse +
-                `\n\nTu saldo actual es ${user.Attempts} -${globalAttempts.textAttempt} EduCoins por Texto.`
+                `\n\nTu saldo actual es ${user.Attempts}-${globalAttempts.textAttempt} EduCoins por Texto.`
             );
-            // substract 1 Attempts
+            // substract Attempts
             await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.textAttempt });
-            return res.sendStatus(200);
+            res.sendStatus(200);
+            return;
           }
         } else if (messageType === "audio") {
           if (user.Attempts < globalAttempts.audioAttempt) {
             await sendMessage(
               phoneNumberId,
               from,
-              "No tienes suficientes intentos disponibles para generar respuestas de audio"
+              "No tienes suficientes EduCoins disponibles para generar respuestas de audio"
             );
-            return res.sendStatus(200);
+            res.sendStatus(200);
+            return;
           }
           const audioMessageId = req.body.entry[0].changes[0].value.messages[0].audio.id;
 
           // Check if the audio message ID has already been processed
-          if (!processedAudioMessages.includes(audioMessageId)) {
-            // Add the ID to the processed list
-            processedAudioMessages.push(audioMessageId);
+          if (processedAudioMessages.includes(audioMessageId)) {
+            res.sendStatus(200);
+            return;
+          }
 
-            let transcriptionResponse = await transcribeAudio(audioMessageId);
+          // Add the ID to the processed list
+          processedAudioMessages.push(audioMessageId);
 
-            // this send a message to the user in WhatsApp to let them know that the transcription is being processed
-            const transcription = `Transcripción del audio: \n${transcriptionResponse} \n\n🎧 Estamos procesando tu audio \n🎤 Tu paciencia es música para mis oídos \nTu saldo actual es ${user.Attempts} -${globalAttempts.audioAttempt} EduCoins por Audio.`;
-            await sendMessage(phoneNumberId, from, transcription);
+          let transcriptionResponse = await transcribeAudio(audioMessageId);
 
-            // function to convert the text to audio
-            const chatgptResponse = await chatgptCompletion(transcriptionResponse);
-            try {
-              const audioResponseLocal = await textToSpeech(chatgptResponse);
-              await sendAudio(phoneNumberId, from, audioResponseLocal.urlPromise);
+          // this send a message to the user in WhatsApp to let them know that the transcription is being processed
+          const transcription = `Transcripción del audio: \n${transcriptionResponse} \n\n🎧 Estamos procesando tu audio \n🎤 Tu paciencia es música para mis oídos \nTu saldo actual es ${user.Attempts}-${globalAttempts.audioAttempt} EduCoins por Audio.`;
+          await sendMessage(phoneNumberId, from, transcription);
 
-              // delete the audio from firebase storage
+          // function to convert the text to audio
+          const chatgptResponse = await chatgptCompletion(transcriptionResponse);
+          console.log("chatgptResponse", chatgptResponse);
+          try {
+            const audioResponseLocal = await textToSpeech(chatgptResponse);
+            const isAudioSent = await sendAudio(phoneNumberId, from, audioResponseLocal.urlPromise);
+
+            if (isAudioSent) {
+              // Si el audio se ha enviado correctamente, eliminar el archivo
               const file = bucket.file(audioResponseLocal.fileName);
               file
                 .delete()
@@ -119,30 +131,37 @@ exports.handleWebhook = async (req, res) => {
                   console.log("Archivo borrado exitosamente");
                 })
                 .catch((error) => {
-                  console.error("Ocurrió un error:", error);
+                  console.error("Error occured while deleting audio in firestore:", error);
                 });
-
-              // substract 5 Attempts
-              await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.audioAttempt });
-              return res.sendStatus(200);
-            } catch (error) {
-              // If an error occurs during text to audio conversion, send a text message instead
-              await sendMessage(phoneNumberId, from, chatgptResponse);
-              console.error("Error occurred while generating audio response:", error);
-              return res.sendStatus(200);
+            } else {
+              // Si ha ocurrido un error, no eliminar el archivo
+              console.log("El audio no se ha enviado correctamente, no se eliminará el archivo");
             }
-          } else {
-            console.log("Audio message already processed:", audioMessageId);
+
+            // substract Attempts
+            await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.audioAttempt });
+            res.sendStatus(200);
+            return;
+          } catch (error) {
+            // If an error occurs during text to audio conversion, send a text message instead
+            await sendMessage(phoneNumberId, from, chatgptResponse);
+            console.error("Error occurred while generating audio response:", error);
+            res.sendStatus(200);
+            return;
           }
+        } else {
+          console.log("Audio message already processed:", audioMessageId);
+          res.sendStatus(200);
+          return;
         }
-        return res.sendStatus(200);
       }
-    } else {
-      return res.sendStatus(200).send("No object found in request body");
+      res.sendStatus(200);
+      return;
     }
   } catch (error) {
     console.error(error);
-    return res.sendStatus(200);
+    res.sendStatus(200);
+    return;
   }
 };
 
