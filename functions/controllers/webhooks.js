@@ -88,7 +88,15 @@ exports.handleWebhook = async (req, res) => {
             res.sendStatus(200);
             return;
           }
-        } //  else if (messageType === "audio") {
+        } else if (messageType === "audio") {
+          await sendMessage(
+            phoneNumberId,
+            from,
+            "Actualmente no se pueden procesar audios, por favor envía un mensaje de texto. Gracias por tu comprensión."
+          );
+          res.sendStatus(200);
+          return;
+        }
         //   if (user.Attempts < globalAttempts.audioAttempt) {
         //     await sendMessage(
         //       phoneNumberId,

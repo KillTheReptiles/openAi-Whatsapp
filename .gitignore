@@ -3,3 +3,5 @@ functions/temp/*
 .env
 serviceAccountKey.json
 functions/authorized_numbers.json
+firebase-debug.log
+firebase-debug.log
