@@ -24,4 +24,4 @@ app.post("/getAttempts", userController.getAttempts);
 app.get("/getUsers", userController.getUsers);
 app.post("/addUser", userController.addUser);
 
-exports.api = functions.https.onRequest(app);
+exports.apiDev = functions.https.onRequest(app);
