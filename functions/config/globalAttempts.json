@@ -1,5 +1,6 @@
 {
   "textAttempt": 0.5,
   "audioAttempt": 33,
-  "imageAttempt": 33
+  "imageAttempt": 33,
+  "textAttemptByAudio": 22
 }

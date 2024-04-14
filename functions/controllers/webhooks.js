@@ -49,7 +49,7 @@ exports.handleWebhook = async (req, res) => {
           }
           let msgBody = req.body.entry[0].changes[0].value.messages[0].text.body;
 
-          if (msgBody.startsWith("/create ")) {
+          if (msgBody.startsWith("/create ") || msgBody.startsWith("/Create ")) {
             if (user.Attempts < globalAttempts.imageAttempt) {
               await sendMessage(
                 phoneNumberId,
@@ -59,6 +59,8 @@ exports.handleWebhook = async (req, res) => {
               res.sendStatus(200);
               return;
             }
+            // We need to convert the message to lowercase to avoid case sensitive issues
+            msgBody = msgBody.toLowerCase();
 
             const extractedText = msgBody.substring("/create ".length);
             await sendMessage(
@@ -98,43 +100,47 @@ exports.handleWebhook = async (req, res) => {
             return;
           }
         } else if (messageType === "audio") {
-          await sendMessage(
-            phoneNumberId,
-            from,
-            "Actualmente no se pueden procesar audios, por favor envía un mensaje de texto. Gracias por tu comprensión."
-          );
+          if (user.Attempts < globalAttempts.textAttemptByAudio) {
+            await sendMessage(
+              phoneNumberId,
+              from,
+              "No tienes suficientes EduCoins disponibles para generar respuestas de audio"
+            );
+            res.sendStatus(200);
+            return;
+          }
+
+          const audioMessageId = req.body.entry[0].changes[0].value.messages[0].audio.id;
+
+          // Check if the audio message ID has already been processed
+          if (processedAudioMessages.includes(audioMessageId)) {
+            res.sendStatus(200);
+            return;
+          }
+
+          // Add the ID to the processed list
+          processedAudioMessages.push(audioMessageId);
+
+          let transcriptionResponse = await transcribeAudio(audioMessageId);
+
+          // this send a message to the user in WhatsApp to let them know that the transcription is being processed
+          const transcription = `Transcripción del audio: \n${transcriptionResponse} \n\n🎧 Estamos procesando tu audio \n🎤 Tu paciencia es música para mis oídos \nTu saldo actual es ${user.Attempts}-${globalAttempts.textAttemptByAudio} EduCoins por Audio.`;
+          await sendMessage(phoneNumberId, from, transcription);
+
+          const chatgptResponse = await chatgptCompletion(transcriptionResponse);
+          if (chatgptResponse) {
+            await sendMessage(phoneNumberId, from, chatgptResponse);
+            // substract Attempts
+            await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.textAttemptByAudio });
+
+            res.sendStatus(200);
+            return;
+          }
           res.sendStatus(200);
           return;
         }
-        //   if (user.Attempts < globalAttempts.audioAttempt) {
-        //     await sendMessage(
-        //       phoneNumberId,
-        //       from,
-        //       "No tienes suficientes EduCoins disponibles para generar respuestas de audio"
-        //     );
-        //     res.sendStatus(200);
-        //     return;
-        //   }
-        //   const audioMessageId = req.body.entry[0].changes[0].value.messages[0].audio.id;
-
-        //   // Check if the audio message ID has already been processed
-        //   if (processedAudioMessages.includes(audioMessageId)) {
-        //     res.sendStatus(200);
-        //     return;
-        //   }
-
-        //   // Add the ID to the processed list
-        //   processedAudioMessages.push(audioMessageId);
-
-        //   let transcriptionResponse = await transcribeAudio(audioMessageId);
-
-        //   // this send a message to the user in WhatsApp to let them know that the transcription is being processed
-        //   const transcription = `Transcripción del audio: \n${transcriptionResponse} \n\n🎧 Estamos procesando tu audio \n🎤 Tu paciencia es música para mis oídos \nTu saldo actual es ${user.Attempts}-${globalAttempts.audioAttempt} EduCoins por Audio.`;
-        //   await sendMessage(phoneNumberId, from, transcription);
 
         //   // function to convert the text to audio
-        //   const chatgptResponse = await chatgptCompletion(transcriptionResponse);
-        //   console.log("chatgptResponse", chatgptResponse);
 
         //   const audioResponsePromise = new Promise((resolve, reject) => {
         //     textToSpeech(chatgptResponse)
