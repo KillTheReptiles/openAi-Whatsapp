@@ -49,7 +49,7 @@ exports.handleWebhook = async (req, res) => {
           }
           let msgBody = req.body.entry[0].changes[0].value.messages[0].text.body;
 
-          if (msgBody.startsWith("/imagina ")) {
+          if (msgBody.startsWith("/create ")) {
             if (user.Attempts < globalAttempts.imageAttempt) {
               await sendMessage(
                 phoneNumberId,
@@ -60,7 +60,7 @@ exports.handleWebhook = async (req, res) => {
               return;
             }
 
-            const extractedText = msgBody.substring("/imagina ".length);
+            const extractedText = msgBody.substring("/create ".length);
             await sendMessage(
               phoneNumberId,
               from,
@@ -70,6 +70,15 @@ exports.handleWebhook = async (req, res) => {
 
             for (const image of images) {
               sendImage(phoneNumberId, from, image.url);
+            }
+            if (images.length === 0) {
+              await sendMessage(
+                phoneNumberId,
+                from,
+                `No se ha podido generar la imagen, no se te descontara ningun EduCoin.`
+              );
+              res.sendStatus(200);
+              return;
             }
             // substract Attempts
             await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.imageAttempt });
