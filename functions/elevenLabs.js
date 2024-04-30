@@ -25,6 +25,10 @@ const textToSpeech = async (textAPI) => {
       voice: "Harry",
       text: "" + textAPI,
       model_id: "eleven_multilingual_v2",
+      voice_settings: {
+        "stability": 0.55,
+        "similarity_boost": 0.55
+      }
     });
 
     // Genera un nombre único para el archivo de audio

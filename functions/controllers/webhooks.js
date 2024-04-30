@@ -49,7 +49,7 @@ exports.handleWebhook = async (req, res) => {
           }
           let msgBody = req.body.entry[0].changes[0].value.messages[0].text.body;
 
-          if (msgBody.startsWith("/imagina ")) {
+          if (msgBody.startsWith("/create ") || msgBody.startsWith("/Create ")) {
             if (user.Attempts < globalAttempts.imageAttempt) {
               await sendMessage(
                 phoneNumberId,
@@ -59,17 +59,28 @@ exports.handleWebhook = async (req, res) => {
               res.sendStatus(200);
               return;
             }
+            // We need to convert the message to lowercase to avoid case sensitive issues
+            msgBody = msgBody.toLowerCase();
 
-            const extractedText = msgBody.substring("/imagina ".length);
+            const extractedText = msgBody.substring("/create ".length);
             await sendMessage(
               phoneNumberId,
               from,
-              `🎨 La creatividad no entiende de prisas \n🖌️ ¡Gracias por tu paciencia!. \nTu saldo actual es ${user.Attempts}-${globalAttempts.imageAttempt} EduCoins por imagen.`
+              `🎨 La creatividad no entiende de prisas \n🖌️ ¡Gracias por tu paciencia!. \nTu saldo actual es ${user.Attempts} - ${globalAttempts.imageAttempt} EduCoins por imagen.`
             );
             const images = await generateImageDalle(extractedText);
 
             for (const image of images) {
               sendImage(phoneNumberId, from, image.url);
+            }
+            if (images.length === 0) {
+              await sendMessage(
+                phoneNumberId,
+                from,
+                `No se ha podido generar la imagen, no se te descontaran EduCoins.`
+              );
+              res.sendStatus(200);
+              return;
             }
             // substract Attempts
             await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.imageAttempt });
@@ -81,7 +92,7 @@ exports.handleWebhook = async (req, res) => {
               phoneNumberId,
               from,
               chatgptResponse +
-                `\n\nTu saldo actual es ${user.Attempts}-${globalAttempts.textAttempt} EduCoins por Texto.`
+                `\n\nTu saldo actual es ${user.Attempts} - ${globalAttempts.textAttempt} EduCoins por Texto.`
             );
             // substract Attempts
             await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.textAttempt });
@@ -93,7 +104,7 @@ exports.handleWebhook = async (req, res) => {
             await sendMessage(
               phoneNumberId,
               from,
-              "No tienes suficientes EduCoins disponibles para generar respuestas de audio"
+              "No tienes suficientes EduCoins disponibles para generar audio"
             );
             res.sendStatus(200);
             return;
@@ -112,7 +123,7 @@ exports.handleWebhook = async (req, res) => {
           let transcriptionResponse = await transcribeAudio(audioMessageId);
 
           // this send a message to the user in WhatsApp to let them know that the transcription is being processed
-          const transcription = `Transcripción del audio: \n${transcriptionResponse} \n\n🎧 Estamos procesando tu audio \n🎤 Tu paciencia es música para mis oídos \nTu saldo actual es ${user.Attempts}-${globalAttempts.audioAttempt} EduCoins por Audio.`;
+          const transcription = `*Transcripción del audio:* \n\n${transcriptionResponse} \n\n_🎧 Estamos procesando tu audio_ \n_🎤 Tu paciencia es música para mis oídos_ \n\n_Tu saldo actual es ${user.Attempts}-${globalAttempts.audioAttempt} EduCoins por Audio._`;
           await sendMessage(phoneNumberId, from, transcription);
 
           // function to convert the text to audio

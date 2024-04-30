@@ -18,7 +18,6 @@ const getDocument = async (collection, documentId) => {
 };
 
 // getDocumentsWhere is a function that returns all the documents from a collection that match with the conditions
-// getDocumentsWhere is a function that returns all the documents from a collection that match with the conditions
 const getDocumentsWhere = async (collection, conditions) => {
   try {
     if (!Array.isArray(conditions)) {
