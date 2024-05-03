@@ -1,4 +1,11 @@
-const { updateDocument, createDocument, getDocument, getDocuments, getDocumentsWhere } = require("../database/querys");
+const {
+  updateDocument,
+  createDocument,
+  getDocument,
+  getDocuments,
+  getDocumentsWhere,
+  deleteDocument,
+} = require("../database/querys");
 
 exports.sumAttempts = async (req, res) => {
   try {
@@ -65,6 +72,25 @@ exports.addUser = async (req, res) => {
       .send(
         `El numero de celular ${body.phoneNumber} ha sido agregado a la lista de usuarios autorizados con ${body.Attempts} intentos`
       );
+  } catch (error) {
+    console.log(error);
+    throw new Error(error);
+  }
+};
+exports.deleteUser = async (req, res) => {
+  try {
+    const body = req.body;
+
+    // verify if the number is in the authorized users
+    let user = await getDocumentsWhere("users", [{ field: "phoneNumber", operator: "==", value: body.phoneNumber }]);
+    user = user[0]; // get the first element of the array (if exists) because the function returns an array
+
+    if (!user) {
+      return res.status(401).send(`El numero de celular ${body.phoneNumber} no existe`);
+    }
+
+    await deleteDocument("users", user.id);
+    return res.status(200).send(`El numero de celular ${body.phoneNumber} ha sido eliminado de la lista de usuarios`);
   } catch (error) {
     console.log(error);
     throw new Error(error);
