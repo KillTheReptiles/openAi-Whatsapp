@@ -1,6 +1,6 @@
 const { updateDocument, createDocument, getDocument, getDocuments, getDocumentsWhere } = require("../database/querys");
 
-exports.updateAttempts = async (req, res) => {
+exports.sumAttempts = async (req, res) => {
   try {
     const body = req.body;
 
@@ -12,9 +12,11 @@ exports.updateAttempts = async (req, res) => {
       return res.status(401).send(`El numero de celular ${body.phoneNumber} no existe`);
     }
 
+    const newAttempts = user.Attempts + body.Attempts;
+
     // update the user attempts
-    await updateDocument("users", user.id, { Attempts: body.Attempts });
-    return res.status(200).send(`El numero de celular ${body.phoneNumber} ahora tiene ${body.Attempts} intentos`);
+    await updateDocument("users", user.id, { Attempts: newAttempts });
+    return res.status(200).send(`El numero de celular ${body.phoneNumber} ahora tiene ${newAttempts} intentos`);
   } catch (error) {
     return res.status(500).send("Error Interno", error);
   }

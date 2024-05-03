@@ -2,8 +2,7 @@ const { textToSpeech } = require("../elevenLabs");
 const { sendMessage, sendImage, sendAudio } = require("../metaAPI");
 const { transcribeAudio, chatgptCompletion, generateImageDalle } = require("../openAIServices");
 const { updateDocument, getDocumentsWhere } = require("../database/querys");
-const { ref, deleteObject } = require("firebase-admin");
-const { bucket } = require("../database/config");
+const { claimCode } = require("./rechargeAccount");
 
 const globalAttempts = require("../config/globalAttempts");
 
@@ -48,6 +47,29 @@ exports.handleWebhook = async (req, res) => {
             return;
           }
           let msgBody = req.body.entry[0].changes[0].value.messages[0].text.body;
+
+          if (msgBody.startsWith("/code ") || msgBody.startsWith("/Code ") || msgBody.startsWith("/CODE ")) {
+            // We need to convert the message to lowercase to avoid case sensitive issues
+
+            const extractedText = msgBody.substring("/code ".length);
+            const codeClaimed = await claimCode(extractedText, from);
+            if (!codeClaimed) {
+              await sendMessage(
+                phoneNumberId,
+                from,
+                `🔑 El código ${extractedText} no es válido o ya ha sido canjeado.`
+              );
+              res.sendStatus(200);
+              return;
+            }
+            await sendMessage(
+              phoneNumberId,
+              from,
+              `🔑 El código ${extractedText} ha sido canjeado con éxito y te cargó ${codeClaimed.eduCoins} EduCoins. \nTu saldo actual es ${codeClaimed.newEduCoins} EduCoins.`
+            );
+            res.sendStatus(200);
+            return;
+          }
 
           if (msgBody.startsWith("/create ") || msgBody.startsWith("/Create ")) {
             if (user.Attempts < globalAttempts.imageAttempt) {
@@ -101,11 +123,7 @@ exports.handleWebhook = async (req, res) => {
           }
         } else if (messageType === "audio") {
           if (user.Attempts < globalAttempts.audioAttempt) {
-            await sendMessage(
-              phoneNumberId,
-              from,
-              "No tienes suficientes EduCoins disponibles para generar audio"
-            );
+            await sendMessage(phoneNumberId, from, "No tienes suficientes EduCoins disponibles para generar audio");
             res.sendStatus(200);
             return;
           }

@@ -1,0 +1,152 @@
+{
+	"info": {
+		"_postman_id": "6751cc0e-7e6e-415d-84c3-8a9231511872",
+		"name": "openAI-Whatsapp-Project",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "11898587",
+		"_collection_link": "https://www.postman.com/severapp/workspace/projects/collection/11898587-6751cc0e-7e6e-415d-84c3-8a9231511872?action=share&source=collection_link&creator=11898587"
+	},
+	"item": [
+		{
+			"name": "getUsers",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://us-central1-openai-whatsapp-c4b00.cloudfunctions.net/api/getUsers",
+					"protocol": "https",
+					"host": [
+						"us-central1-openai-whatsapp-c4b00",
+						"cloudfunctions",
+						"net"
+					],
+					"path": [
+						"api",
+						"getUsers"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "addUser",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"phoneNumber\": \"5492613181111\",\n\t\"Attempts\": 30\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://us-central1-openai-whatsapp-c4b00.cloudfunctions.net/api/addUser",
+					"protocol": "https",
+					"host": [
+						"us-central1-openai-whatsapp-c4b00",
+						"cloudfunctions",
+						"net"
+					],
+					"path": [
+						"api",
+						"addUser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "sumAttempts",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"phoneNumber\": \"573005187989\",\n\t\"Attempts\": 100\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://us-central1-openai-whatsapp-c4b00.cloudfunctions.net/apiDev/sumAttempts",
+					"protocol": "https",
+					"host": [
+						"us-central1-openai-whatsapp-c4b00",
+						"cloudfunctions",
+						"net"
+					],
+					"path": [
+						"apiDev",
+						"sumAttempts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "createCode",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"code\": \"A12345\",\n    \"eduCoins\": 100\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://us-central1-openai-whatsapp-c4b00.cloudfunctions.net/apiDev/createCode",
+					"protocol": "https",
+					"host": [
+						"us-central1-openai-whatsapp-c4b00",
+						"cloudfunctions",
+						"net"
+					],
+					"path": [
+						"apiDev",
+						"createCode"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "getAttempts",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"phoneNumber\": \"573005187989\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://us-central1-openai-whatsapp-c4b00.cloudfunctions.net/api/getAttempts",
+					"protocol": "https",
+					"host": [
+						"us-central1-openai-whatsapp-c4b00",
+						"cloudfunctions",
+						"net"
+					],
+					"path": [
+						"api",
+						"getAttempts"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
