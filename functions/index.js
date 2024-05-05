@@ -1,6 +1,7 @@
 const functions = require("firebase-functions");
 const webhookController = require("./controllers/webhooks");
 const userController = require("./controllers/user");
+const rechargeAccountController = require("./controllers/rechargeAccount");
 
 //dotenv
 require("dotenv").config();
@@ -17,11 +18,15 @@ app.post("/webhook", webhookController.handleWebhook);
 app.get("/webhook", webhookController.verifyWebhook);
 
 // Attempts Routes
-app.post("/updateAttempts", userController.updateAttempts);
+app.post("/sumAttempts", userController.sumAttempts);
 app.post("/getAttempts", userController.getAttempts);
 
 // User Routes
 app.get("/getUsers", userController.getUsers);
 app.post("/addUser", userController.addUser);
+app.post("/deleteUser", userController.deleteUser);
 
-exports.api = functions.https.onRequest(app);
+// Recharge Account Routes
+app.post("/createCode", rechargeAccountController.createCode);
+
+exports.apiDev = functions.https.onRequest(app);

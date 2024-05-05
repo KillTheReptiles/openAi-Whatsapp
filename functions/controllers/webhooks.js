@@ -1,9 +1,8 @@
 const { textToSpeech } = require("../elevenLabs");
-const { sendMessage, sendImage, sendAudio } = require("../metaAPI");
-const { transcribeAudio, chatgptCompletion, generateImageDalle } = require("../openAIServices");
-const { updateDocument, getDocumentsWhere } = require("../database/querys");
-const { ref, deleteObject } = require("firebase-admin");
-const { bucket } = require("../database/config");
+const { welcomeMessage, sendMessage, sendImage, sendAudio } = require("../metaAPI");
+const { chatgptSummary, transcribeAudio, chatgptCompletion, generateImageDalle } = require("../openAIServices");
+const { updateDocument, getDocumentsWhere, createDocument } = require("../database/querys");
+const { claimCode } = require("./rechargeAccount");
 
 const globalAttempts = require("../config/globalAttempts");
 
@@ -35,20 +34,99 @@ exports.handleWebhook = async (req, res) => {
         let user = await getDocumentsWhere("users", [{ field: "phoneNumber", operator: "==", value: from }]);
         user = user[0]; // get the first element of the array (if exists) because the function returns an array
 
+        // detect if is a new user in the watsapp chat and send a welcome message
+
         if (!user) {
-          await sendMessage(phoneNumberId, from, "No estás autorizado para usar este servicio");
+          await welcomeMessage(phoneNumberId, from);
+          await createDocument("users", { phoneNumber: from, Attempts: 0 });
+
           res.sendStatus(200);
           return;
         }
 
+        // if (messageType === "request_welcome") {
+        //   await welcomeMessage(phoneNumberId, from);
+        //   res.sendStatus(200);
+        //   return;
+        // }
+
         if (messageType === "text") {
-          if (user.Attempts < globalAttempts.textAttempt) {
-            await sendMessage(phoneNumberId, from, "No tienes más EduCoins disponibles");
+          let msgBody = req.body.entry[0].changes[0].value.messages[0].text.body;
+
+          if (msgBody.startsWith("/code ") || msgBody.startsWith("/Code ") || msgBody.startsWith("/CODE ")) {
+            // We need to convert the message to lowercase to avoid case sensitive issues
+
+            const extractedText = msgBody.substring("/code ".length);
+            const codeClaimed = await claimCode(extractedText, from);
+            if (!codeClaimed) {
+              await sendMessage(
+                phoneNumberId,
+                from,
+                `🔑 El código ${extractedText} no es válido o ya ha sido canjeado.`
+              );
+              res.sendStatus(200);
+              return;
+            }
+            await sendMessage(
+              phoneNumberId,
+              from,
+              `🔑 El código ${extractedText} ha sido canjeado con éxito y te cargó ${codeClaimed.eduCoins} EduCoins. \nTu saldo actual es ${codeClaimed.newEduCoins} EduCoins.`
+            );
             res.sendStatus(200);
             return;
           }
-          let msgBody = req.body.entry[0].changes[0].value.messages[0].text.body;
+          if (msgBody.startsWith("/resume ") || msgBody.startsWith("/Resume ")) {
+            if (user.Attempts < globalAttempts.audioAttempt) {
+              await sendMessage(
+                phoneNumberId,
+                from,
+                "No tienes suficientes EduCoins disponibles para generar resúmenes."
+              );
+              res.sendStatus(200);
+              return;
+            }
+            const extractedText = msgBody.substring("/resume ".length);
+            const chatgptResponse = await chatgptSummary(extractedText);
+            await sendMessage(
+              phoneNumberId,
+              from,
+              chatgptResponse +
+                `\n\nTu saldo actual es ${user.Attempts} - ${globalAttempts.textSummaryAttempt} EduCoins por resumen.`
+            );
+            // substract Attempts
+            await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.textSummaryAttempt });
 
+            res.sendStatus(200);
+            return;
+          }
+
+          if (msgBody.startsWith("/qr ") || msgBody.startsWith("/Qr ") || msgBody.startsWith("/QR ")) {
+            if (user.Attempts < globalAttempts.qrAttempt) {
+              await sendMessage(
+                phoneNumberId,
+                from,
+                "No tienes suficientes EduCoins disponibles para generar códigos QR"
+              );
+              res.sendStatus(200);
+              return;
+            }
+            const extracted_text = msgBody.substring("/qr ".length);
+            await sendImage(
+              phoneNumberId,
+              from,
+              "https://api.qrserver.com/v1/create-qr-code/?data=" + extracted_text + "&size=1024x1024.jpg"
+            );
+            await sendMessage(
+              phoneNumberId,
+              from,
+              `La generación del código QR ha sido exitosa. \nTu saldo actual es  ${user.Attempts} - ${globalAttempts.qrAttempt} EduCoins.`
+            );
+            // substract Attempts from user
+            await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.qrAttempt });
+
+            res.sendStatus(200);
+            return;
+          }
           if (msgBody.startsWith("/create ") || msgBody.startsWith("/Create ")) {
             if (user.Attempts < globalAttempts.imageAttempt) {
               await sendMessage(
@@ -87,6 +165,12 @@ exports.handleWebhook = async (req, res) => {
             res.sendStatus(200);
             return;
           } else {
+            if (user.Attempts < globalAttempts.textAttempt) {
+              await sendMessage(phoneNumberId, from, "No tienes más EduCoins disponibles para generar texto.");
+              res.sendStatus(200);
+              return;
+            }
+
             const chatgptResponse = await chatgptCompletion(msgBody);
             await sendMessage(
               phoneNumberId,
@@ -101,11 +185,8 @@ exports.handleWebhook = async (req, res) => {
           }
         } else if (messageType === "audio") {
           if (user.Attempts < globalAttempts.audioAttempt) {
-            await sendMessage(
-              phoneNumberId,
-              from,
-              "No tienes suficientes EduCoins disponibles para generar audio"
-            );
+            await sendMessage(phoneNumberId, from, "No tienes suficientes EduCoins disponibles para generar audio");
+
             res.sendStatus(200);
             return;
           }
