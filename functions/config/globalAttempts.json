@@ -1,6 +1,8 @@
 {
   "textAttempt": 0.5,
+  "textSummaryAttempt": 1,
   "audioAttempt": 33,
   "imageAttempt": 33,
-  "textAttemptByAudio": 22
+  "textAttemptByAudio": 22,
+  "qrAttempt": 5
 }

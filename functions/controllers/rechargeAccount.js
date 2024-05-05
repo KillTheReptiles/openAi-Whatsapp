@@ -39,7 +39,7 @@ exports.claimCode = async (code, phoneNumber) => {
     const newEduCoins = user[0].Attempts + codeRef[0].eduCoins;
     if (user.length === 0) {
       // user not found is new
-      await createDocument("users", { phoneNumber, eduCoins: codeRef[0].eduCoins });
+      await createDocument("users", { phoneNumber, Attempts: codeRef[0].eduCoins });
     } else {
       await updateDocument("users", user[0].id, { Attempts: newEduCoins });
       await updateDocument("codes", codeRef[0].id, { phoneNumber: phoneNumber, used: true });

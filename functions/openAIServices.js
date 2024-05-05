@@ -56,7 +56,8 @@ const chatgptCompletion = async (message) => {
       messages: [
         {
           role: "system",
-          content: "You are Edu Buddy, the Pro Version of Edu Compa, a chatbot with AI that can understand texts, listen to audios and create images, characterized by being intelligent, pleasant and concise when responding. You were created in Chile by Edu Global, but currently you have become an international project.",
+          content:
+            "You are Edu Buddy, the Pro Version of Edu Compa, a chatbot with AI that can understand texts, listen to audios and create images, characterized by being intelligent, pleasant and concise when responding. You were created in Chile by Edu Global, but currently you have become an international project.",
         },
         {
           role: "user",
@@ -82,7 +83,40 @@ const chatgptCompletion = async (message) => {
     throw new Error(error);
   }
 };
+// Get a summary from ChatGPT
+const chatgptSummary = async (message) => {
+  try {
+    let openaiData = JSON.stringify({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "Please make a summary of the following text:",
+        },
+        {
+          role: "user",
+          content: message,
+        },
+      ],
+    });
 
+    const completion = await axios({
+      method: "post",
+      maxBodyLength: Infinity,
+      url: "https://api.openai.com/v1/chat/completions",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${openaiToken}`,
+      },
+      data: openaiData,
+    });
+
+    return completion.data.choices[0].message.content;
+  } catch (error) {
+    console.error(error);
+    throw new Error(error);
+  }
+};
 // Generate image using DALL-E model
 const generateImageDalle = async (prompt) => {
   try {
@@ -109,4 +143,4 @@ const generateImageDalle = async (prompt) => {
   }
 };
 
-module.exports = { chatgptCompletion, generateImageDalle, transcribeAudio };
+module.exports = { chatgptSummary, chatgptCompletion, generateImageDalle, transcribeAudio };

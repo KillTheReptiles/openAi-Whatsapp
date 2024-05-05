@@ -30,15 +30,3 @@ app.post("/deleteUser", userController.deleteUser);
 app.post("/createCode", rechargeAccountController.createCode);
 
 exports.apiDev = functions.https.onRequest(app);
-
-/*TODO: 
-1. Autorizar automáticamente a cualquier numero que le contacte pero con saldo 0 en EduCoins 
-
-3. Añadir el comando "eliminar usuario al postman". 
-
-5. Agregar los comandos:
-/Welcome_Message:
-/Qr:
-/Resume:
-Que ya están listos, solo es agregarlos
-*/
