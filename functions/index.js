@@ -29,4 +29,4 @@ app.post("/deleteUser", userController.deleteUser);
 // Recharge Account Routes
 app.post("/createCode", rechargeAccountController.createCode);
 
-exports.apiDev = functions.https.onRequest(app);
+exports.api = functions.https.onRequest(app);
