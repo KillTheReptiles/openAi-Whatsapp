@@ -127,7 +127,6 @@ exports.handleWebhook = async (req, res) => {
             res.sendStatus(200);
             return;
           }
-
           if (msgBody.startsWith("/create ") || msgBody.startsWith("/Create ")) {
             if (user.Attempts < globalAttempts.imageAttempt) {
               await sendMessage(
@@ -187,6 +186,7 @@ exports.handleWebhook = async (req, res) => {
         } else if (messageType === "audio") {
           if (user.Attempts < globalAttempts.audioAttempt) {
             await sendMessage(phoneNumberId, from, "No tienes suficientes EduCoins disponibles para generar audio");
+
             res.sendStatus(200);
             return;
           }
