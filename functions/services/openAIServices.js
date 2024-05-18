@@ -49,21 +49,32 @@ const transcribeAudio = async (mediaId) => {
 };
 
 // Get completion from ChatGPT
-const chatgptCompletion = async (message) => {
+const chatgptCompletion = async (message, historyMessages) => {
+  const dateNow = new Date();
+
   try {
-    let openaiData = JSON.stringify({
+    let openaiData = {
       model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
-          content:
-            "You are Edu Buddy, the Pro Version of Edu Compa, a chatbot with AI that can understand texts, listen to audios and create images, characterized by being intelligent, pleasant and concise when responding. You were created in Chile by Edu Global, but currently you have become an international project.",
-        },
-        {
-          role: "user",
-          content: message,
+          content: `Today is ${dateNow} UTC. You are Edu Buddy, the Pro Version of Edu Compa, a chatbot with AI that can understand texts, listen to audios and create images, characterized by being intelligent, pleasant and concise when responding. You were created in Chile by Edu Global, but currently you have become an international project.`,
         },
       ],
+    };
+
+    if (historyMessages && historyMessages.length > 0) {
+      openaiData.messages.push(
+        ...historyMessages.map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        }))
+      );
+    }
+
+    openaiData.messages.push({
+      role: "user",
+      content: message,
     });
 
     const completion = await axios({
@@ -74,7 +85,7 @@ const chatgptCompletion = async (message) => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${openaiToken}`,
       },
-      data: openaiData,
+      data: JSON.stringify(openaiData),
     });
 
     return completion.data.choices[0].message.content;
@@ -143,4 +154,49 @@ const generateImageDalle = async (prompt) => {
   }
 };
 
-module.exports = { chatgptSummary, chatgptCompletion, generateImageDalle, transcribeAudio };
+// Get completion from ChatGPT
+const visionOpenAI = async (prompt, base64_image) => {
+  try {
+    if (!prompt) {
+      prompt = "¿Qué hay en esta imagén?";
+    }
+    let openaiData = {
+      model: "gpt-4-turbo",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: prompt,
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:image/jpeg;base64,${base64_image}`,
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    const completion = await axios({
+      method: "post",
+      maxBodyLength: Infinity,
+      url: "https://api.openai.com/v1/chat/completions",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${openaiToken}`,
+      },
+      data: JSON.stringify(openaiData),
+    });
+
+    return completion.data.choices[0].message.content;
+  } catch (error) {
+    console.error(error);
+    throw new Error(error);
+  }
+};
+
+module.exports = { chatgptSummary, chatgptCompletion, generateImageDalle, transcribeAudio, visionOpenAI };

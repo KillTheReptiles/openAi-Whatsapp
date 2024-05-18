@@ -1,4 +1,3 @@
-const axios = require("axios");
 const fs = require("fs");
 const stream = require("stream");
 const util = require("util");
@@ -6,7 +5,7 @@ const ffmpeg = require("fluent-ffmpeg");
 const os = require("os");
 const path = require("path");
 const { ElevenLabsClient } = require("elevenlabs");
-const { bucket } = require("./database/config");
+const { bucket } = require("../database/config");
 require("dotenv").config();
 
 // Environment Variables
@@ -26,9 +25,9 @@ const textToSpeech = async (textAPI) => {
       text: "" + textAPI,
       model_id: "eleven_multilingual_v2",
       voice_settings: {
-        "stability": 0.55,
-        "similarity_boost": 0.55
-      }
+        stability: 0.55,
+        similarity_boost: 0.55,
+      },
     });
 
     // Genera un nombre único para el archivo de audio

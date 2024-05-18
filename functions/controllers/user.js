@@ -1,7 +1,6 @@
 const {
   updateDocument,
   createDocument,
-  getDocument,
   getDocuments,
   getDocumentsWhere,
   deleteDocument,

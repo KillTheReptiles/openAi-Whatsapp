@@ -3,6 +3,8 @@
   "textSummaryAttempt": 1,
   "audioAttempt": 33,
   "imageAttempt": 33,
+  "searchAttempt": 5,
+  "visionOpenAIAttempt": 44,
   "textAttemptByAudio": 22,
   "qrAttempt": 5
 }

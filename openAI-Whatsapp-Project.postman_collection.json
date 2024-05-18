@@ -8,34 +8,333 @@
 	},
 	"item": [
 		{
-			"name": "getUsers",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "https://us-central1-openai-whatsapp-c4b00.cloudfunctions.net/api/getUsers",
-					"protocol": "https",
-					"host": [
-						"us-central1-openai-whatsapp-c4b00",
-						"cloudfunctions",
-						"net"
-					],
-					"path": [
-						"api",
-						"getUsers"
-					]
+			"name": "Codes",
+			"item": [
+				{
+					"name": "getCodes",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{edu_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://us-central1-openai-whatsapp-c4b00.cloudfunctions.net/apiDev/getCodes",
+							"protocol": "https",
+							"host": [
+								"us-central1-openai-whatsapp-c4b00",
+								"cloudfunctions",
+								"net"
+							],
+							"path": [
+								"apiDev",
+								"getCodes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "createCode",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{edu_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"code\": \"A1234\",\n    \"eduCoins\": 100\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://us-central1-openai-whatsapp-c4b00.cloudfunctions.net/apiDev/createCode",
+							"protocol": "https",
+							"host": [
+								"us-central1-openai-whatsapp-c4b00",
+								"cloudfunctions",
+								"net"
+							],
+							"path": [
+								"apiDev",
+								"createCode"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "deleteCode",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{edu_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"code\": \"CaARcfII\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://us-central1-openai-whatsapp-c4b00.cloudfunctions.net/apiDev/deleteCode",
+							"protocol": "https",
+							"host": [
+								"us-central1-openai-whatsapp-c4b00",
+								"cloudfunctions",
+								"net"
+							],
+							"path": [
+								"apiDev",
+								"deleteCode"
+							]
+						}
+					},
+					"response": []
 				}
-			},
-			"response": []
+			]
 		},
 		{
-			"name": "addUser",
+			"name": "User",
+			"item": [
+				{
+					"name": "getUsers",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{edu_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://us-central1-openai-whatsapp-c4b00.cloudfunctions.net/api/getUsers",
+							"protocol": "https",
+							"host": [
+								"us-central1-openai-whatsapp-c4b00",
+								"cloudfunctions",
+								"net"
+							],
+							"path": [
+								"api",
+								"getUsers"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "addUser",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{edu_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"phoneNumber\": \"5214891163277\",\n\t\"Attempts\": 100\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://us-central1-openai-whatsapp-c4b00.cloudfunctions.net/api/addUser",
+							"protocol": "https",
+							"host": [
+								"us-central1-openai-whatsapp-c4b00",
+								"cloudfunctions",
+								"net"
+							],
+							"path": [
+								"api",
+								"addUser"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "deleteUser",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{edu_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"phoneNumber\": \"5492613181111\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://us-central1-openai-whatsapp-c4b00.cloudfunctions.net/apiDev/deleteUser",
+							"protocol": "https",
+							"host": [
+								"us-central1-openai-whatsapp-c4b00",
+								"cloudfunctions",
+								"net"
+							],
+							"path": [
+								"apiDev",
+								"deleteUser"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "EduCoins",
+			"item": [
+				{
+					"name": "getAttempts",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{edu_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"phoneNumber\": \"573005187989\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://us-central1-openai-whatsapp-c4b00.cloudfunctions.net/api/getAttempts",
+							"protocol": "https",
+							"host": [
+								"us-central1-openai-whatsapp-c4b00",
+								"cloudfunctions",
+								"net"
+							],
+							"path": [
+								"api",
+								"getAttempts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "sumAttempts",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{edu_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"phoneNumber\": \"573005187989\",\n\t\"Attempts\": 300\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://us-central1-openai-whatsapp-c4b00.cloudfunctions.net/apiDev/sumAttempts",
+							"protocol": "https",
+							"host": [
+								"us-central1-openai-whatsapp-c4b00",
+								"cloudfunctions",
+								"net"
+							],
+							"path": [
+								"apiDev",
+								"sumAttempts"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "FIREBASE LOGIN",
 			"request": {
+				"auth": {
+					"type": "noauth"
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"phoneNumber\": \"5492613181111\",\n\t\"Attempts\": 30\n}",
+					"raw": "{\n    \"email\": \"edu@test.com\",\n    \"password\": \"12345678\",\n    \"returnSecureToken\": true\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -43,106 +342,24 @@
 					}
 				},
 				"url": {
-					"raw": "https://us-central1-openai-whatsapp-c4b00.cloudfunctions.net/api/addUser",
+					"raw": "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=AIzaSyD_Fb4M6l3Oi14MMLzdXYaYXktfWQ0Kcfo",
 					"protocol": "https",
 					"host": [
-						"us-central1-openai-whatsapp-c4b00",
-						"cloudfunctions",
-						"net"
+						"www",
+						"googleapis",
+						"com"
 					],
 					"path": [
-						"api",
-						"addUser"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "sumAttempts",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"phoneNumber\": \"573005187989\",\n\t\"Attempts\": 100\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+						"identitytoolkit",
+						"v3",
+						"relyingparty",
+						"verifyPassword"
+					],
+					"query": [
+						{
+							"key": "key",
+							"value": "AIzaSyD_Fb4M6l3Oi14MMLzdXYaYXktfWQ0Kcfo"
 						}
-					}
-				},
-				"url": {
-					"raw": "https://us-central1-openai-whatsapp-c4b00.cloudfunctions.net/apiDev/sumAttempts",
-					"protocol": "https",
-					"host": [
-						"us-central1-openai-whatsapp-c4b00",
-						"cloudfunctions",
-						"net"
-					],
-					"path": [
-						"apiDev",
-						"sumAttempts"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "createCode",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"code\": \"A12345\",\n    \"eduCoins\": 100\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "https://us-central1-openai-whatsapp-c4b00.cloudfunctions.net/apiDev/createCode",
-					"protocol": "https",
-					"host": [
-						"us-central1-openai-whatsapp-c4b00",
-						"cloudfunctions",
-						"net"
-					],
-					"path": [
-						"apiDev",
-						"createCode"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "getAttempts",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"phoneNumber\": \"573005187989\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "https://us-central1-openai-whatsapp-c4b00.cloudfunctions.net/api/getAttempts",
-					"protocol": "https",
-					"host": [
-						"us-central1-openai-whatsapp-c4b00",
-						"cloudfunctions",
-						"net"
-					],
-					"path": [
-						"api",
-						"getAttempts"
 					]
 				}
 			},

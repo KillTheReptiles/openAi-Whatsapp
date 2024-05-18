@@ -1,4 +1,20 @@
-const { updateDocument, createDocument, getDocument, getDocuments, getDocumentsWhere } = require("../database/querys");
+const {
+  updateDocument,
+  createDocument,
+  getDocuments,
+  getDocumentsWhere,
+  deleteDocument,
+} = require("../database/querys");
+
+exports.getCodes = async (req, res) => {
+  try {
+    const codes = await getDocuments("codes");
+    return res.status(200).send(codes);
+  } catch (error) {
+    console.log(error);
+    throw new Error(error);
+  }
+};
 
 exports.createCode = async (req, res) => {
   try {
@@ -46,6 +62,24 @@ exports.claimCode = async (code, phoneNumber) => {
 
       return { newEduCoins: newEduCoins, eduCoins: codeRef[0].eduCoins };
     }
+  } catch (error) {
+    console.log(error);
+    throw new Error(error);
+  }
+};
+
+exports.deleteCode = async (req, res) => {
+  try {
+    const body = req.body;
+
+    // verify if the code exists
+    const code = await getDocumentsWhere("codes", [{ field: "code", operator: "==", value: body.code }]);
+    if (code.length === 0) {
+      return res.status(401).send(`El codigo ${body.code} no existe`);
+    }
+
+    await deleteDocument("codes", code[0].id);
+    return res.status(200).send(`Codigo ${body.code} eliminado con exito`);
   } catch (error) {
     console.log(error);
     throw new Error(error);

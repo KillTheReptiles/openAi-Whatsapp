@@ -1,10 +1,18 @@
-const { textToSpeech } = require("../elevenLabs");
-const { welcomeMessage, sendMessage, sendImage, sendAudio } = require("../metaAPI");
-const { chatgptSummary, transcribeAudio, chatgptCompletion, generateImageDalle } = require("../openAIServices");
+const { textToSpeech } = require("../services/elevenLabs");
+const { welcomeMessage, sendMessage, sendImage, sendAudio, getImageUrl, sendVideo } = require("../services/metaAPI");
+const {
+  chatgptSummary,
+  transcribeAudio,
+  chatgptCompletion,
+  generateImageDalle,
+  visionOpenAI,
+} = require("../services/openAIServices");
 const { updateDocument, getDocumentsWhere, createDocument } = require("../database/querys");
 const { claimCode } = require("./rechargeAccount");
 
 const globalAttempts = require("../config/globalAttempts");
+const { chatMemory } = require("../helpers/chatMemory");
+const { searchImages, searchVideos, saveVideoInFirebaseStorage } = require("../services/pexels");
 
 //dotenv
 require("dotenv").config();
@@ -32,7 +40,7 @@ exports.handleWebhook = async (req, res) => {
 
         // Check if the user exists
         let user = await getDocumentsWhere("users", [{ field: "phoneNumber", operator: "==", value: from }]);
-        user = user[0]; // get the first element of the array (if exists) because the function returns an array
+        user = user[0]; // get the first element of the arra/y (if exists) because the function returns an array
 
         // detect if is a new user in the watsapp chat and send a welcome message
 
@@ -49,9 +57,50 @@ exports.handleWebhook = async (req, res) => {
         //   res.sendStatus(200);
         //   return;
         // }
+        if (messageType === "image") {
+          if (user.Attempts < globalAttempts.visionOpenAIAttempt) {
+            await sendMessage(
+              phoneNumberId,
+              from,
+              "No tienes suficientes EduCoins disponibles para analizar imagenes."
+            );
+            res.sendStatus(200);
+            return;
+          }
+          const imageMsg = req.body.entry[0].changes[0].value.messages[0].image.caption; // message from the image
+          const image = req.body.entry[0].changes[0].value.messages[0].image;
+          const imgBase64 = await getImageUrl(image.id);
 
+          const analizedImageResponse = await visionOpenAI(imageMsg, imgBase64);
+
+          await sendMessage(
+            phoneNumberId,
+            from,
+            analizedImageResponse +
+              `\n\nTu saldo actual es ${user.Attempts} - ${globalAttempts.visionOpenAIAttempt} EduCoins por analizar imagenes.`
+          );
+
+          // substract Attempts
+          await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.visionOpenAIAttempt });
+
+          // Save the message in the chat memory
+          let historyMessages = await getDocumentsWhere("historyChats", [
+            { field: "phoneNumber", operator: "==", value: from },
+          ]);
+
+          if (historyMessages.length === 0) {
+            historyMessages = null;
+          } else {
+            historyMessages = historyMessages[0].messages;
+          }
+          await chatMemory(from, imageMsg, analizedImageResponse);
+
+          res.sendStatus(200);
+          return;
+        }
         if (messageType === "text") {
           let msgBody = req.body.entry[0].changes[0].value.messages[0].text.body;
+          let chatgptResponse = "";
 
           if (msgBody.startsWith("/code ") || msgBody.startsWith("/Code ") || msgBody.startsWith("/CODE ")) {
             // We need to convert the message to lowercase to avoid case sensitive issues
@@ -86,7 +135,7 @@ exports.handleWebhook = async (req, res) => {
               return;
             }
             const extractedText = msgBody.substring("/resume ".length);
-            const chatgptResponse = await chatgptSummary(extractedText);
+            chatgptResponse = await chatgptSummary(extractedText);
             await sendMessage(
               phoneNumberId,
               from,
@@ -164,6 +213,65 @@ exports.handleWebhook = async (req, res) => {
             await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.imageAttempt });
             res.sendStatus(200);
             return;
+          }
+          if (msgBody.startsWith("/search ") || msgBody.startsWith("/Search ") || msgBody.startsWith("/SEARCH ")) {
+            if (user.Attempts < globalAttempts.searchAttempt) {
+              await sendMessage(
+                phoneNumberId,
+                from,
+                "No tienes suficientes EduCoins disponibles para generar una búsqueda."
+              );
+              res.sendStatus(200);
+              return;
+            }
+            msgBody = msgBody.toLowerCase();
+
+            const extractedText = msgBody.substring("/search ".length);
+
+            const videos = await searchVideos(extractedText);
+            const images = await searchImages(extractedText);
+
+            const randomIndexImg = Math.floor(Math.random() * images.length);
+            const randomImage = images[randomIndexImg];
+
+            const image = randomImage.src.original;
+
+            if (videos.length === 0) {
+              // send the image to the user if no videos are available
+              await sendImage(phoneNumberId, from, image);
+
+              // substract Attempts from user
+              await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.searchAttempt });
+
+              await sendMessage(
+                phoneNumberId,
+                from,
+                `Se te han descontado ${globalAttempts.searchAttempt} EduCoins por la búsqueda`
+              );
+              res.sendStatus(200);
+              return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * videos.length);
+            const randomVideo = videos[randomIndex];
+
+            const videoUrl = await saveVideoInFirebaseStorage(randomVideo.video_files[0].link);
+
+            // Send the video and image to the user if both are available
+            await sendVideo(phoneNumberId, from, videoUrl);
+            await sendImage(phoneNumberId, from, image);
+
+            // substract Attempts from user
+            await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.searchAttempt });
+
+            await sendMessage(
+              phoneNumberId,
+              from,
+              `Se te han descontado ${globalAttempts.searchAttempt} EduCoins por la búsqueda`
+            );
+
+            res.sendStatus(200);
+            return;
           } else {
             if (user.Attempts < globalAttempts.textAttempt) {
               await sendMessage(phoneNumberId, from, "No tienes más EduCoins disponibles para generar texto.");
@@ -171,13 +279,23 @@ exports.handleWebhook = async (req, res) => {
               return;
             }
 
-            const chatgptResponse = await chatgptCompletion(msgBody);
+            let historyMessages = await getDocumentsWhere("historyChats", [
+              { field: "phoneNumber", operator: "==", value: from },
+            ]);
+            if (historyMessages.length === 0) {
+              historyMessages = null;
+            } else {
+              historyMessages = historyMessages[0].messages;
+            }
+
+            chatgptResponse = await chatgptCompletion(msgBody, historyMessages);
             await sendMessage(
               phoneNumberId,
               from,
               chatgptResponse +
                 `\n\nTu saldo actual es ${user.Attempts} - ${globalAttempts.textAttempt} EduCoins por Texto.`
             );
+            await chatMemory(from, msgBody, chatgptResponse);
             // substract Attempts
             await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.textAttempt });
             res.sendStatus(200);
@@ -203,13 +321,31 @@ exports.handleWebhook = async (req, res) => {
 
           let transcriptionResponse = await transcribeAudio(audioMessageId);
 
-          // this send a message to the user in WhatsApp to let them know that the transcription is being processed
-          const transcription = `*Transcripción del audio:* \n\n${transcriptionResponse} \n\n_🎧 Estamos procesando tu audio_ \n_🎤 Tu paciencia es música para mis oídos_ \n\n_Tu saldo actual es ${user.Attempts}-${globalAttempts.audioAttempt} EduCoins por Audio._`;
-          await sendMessage(phoneNumberId, from, transcription);
+          //load the history of the chat
+          let historyMessages = await getDocumentsWhere("historyChats", [
+            { field: "phoneNumber", operator: "==", value: from },
+          ]);
 
+          if (historyMessages.length === 0) {
+            historyMessages = null;
+          } else {
+            historyMessages = historyMessages[0].messages;
+          }
           // function to convert the text to audio
-          const chatgptResponse = await chatgptCompletion(transcriptionResponse);
-          console.log("chatgptResponse", chatgptResponse);
+          chatgptResponse = await chatgptCompletion(transcriptionResponse, historyMessages);
+
+          const waitMesagges = [
+            "Estamos procesando tu audio",
+            "Estoy escuchando con atención",
+            "Tu paciencia es Música para mis oídos",
+          ];
+
+          const randomIndexMsg = Math.floor(Math.random() * waitMesagges.length);
+          const randomMessage = waitMesagges[randomIndexMsg];
+
+          // this send a message to the user in WhatsApp to let them know that the transcription is being processed
+          const transcription = `*Transcripción del audio:* \n\n${transcriptionResponse} \n\n_🎧 Estamos procesando tu audio_ \n_🎤 ${randomMessage}_ \nLa respuesta es:\n${chatgptResponse} \n_Tu saldo actual es ${user.Attempts}-${globalAttempts.audioAttempt} EduCoins por Audio._`;
+          await sendMessage(phoneNumberId, from, transcription);
 
           const audioResponsePromise = new Promise((resolve, reject) => {
             textToSpeech(chatgptResponse)
@@ -225,7 +361,6 @@ exports.handleWebhook = async (req, res) => {
             .then(async (audioResponseLocal) => {
               const isAudioSent = await sendAudio(phoneNumberId, from, audioResponseLocal.urlPromise);
               if (isAudioSent) {
-                console.log("Audio enviado correctamente");
                 // substract Attempts
                 await updateDocument("users", user.id, { Attempts: user.Attempts - globalAttempts.audioAttempt });
               } else {
@@ -245,6 +380,10 @@ exports.handleWebhook = async (req, res) => {
               res.sendStatus(200);
               return;
             });
+
+          // Save the message in the chat memory
+          await chatMemory(from, transcriptionResponse, chatgptResponse);
+
           res.sendStatus(200);
           return;
         } else {

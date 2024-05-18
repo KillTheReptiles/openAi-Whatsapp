@@ -23,7 +23,7 @@
     "firebase-functions": "^4.3.1",
     "fluent-ffmpeg": "^2.1.2",
     "form-data": "^4.0.0",
-    "request": "^2.88.2"
+    "pexels": "^1.4.0"
   },
   "devDependencies": {
     "firebase-functions-test": "^3.1.0"
