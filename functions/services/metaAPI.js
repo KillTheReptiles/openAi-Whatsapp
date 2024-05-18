@@ -22,6 +22,50 @@ const sendMessage = async (phoneNumberId, to, text) => {
   }
 };
 
+const getImageUrl = async (mediaId) => {
+  try {
+    const imageLocked = await axios({
+      method: "GET",
+      url: `https://graph.facebook.com/v19.0/${mediaId}`,
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const imageUrl = await axios({
+      method: "GET",
+      url: imageLocked.data.url,
+      responseType: "arraybuffer", // this is to get binary data
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const base64 = Buffer.from(imageUrl.data, "binary").toString("base64");
+
+    return base64;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+// Send video message to whatsapp
+const sendVideo = async (phoneNumberId, to, videoUrl) => {
+  try {
+    const videoResponseWtp = await axios({
+      method: "POST",
+      url: `https://graph.facebook.com/v19.0/${phoneNumberId}/messages?access_token=${token}`,
+      data: {
+        messaging_product: "whatsapp",
+        to,
+        type: "video",
+        video: { link: videoUrl },
+      },
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
 const sendAudio = async (phoneNumberId, to, audioUrl) => {
   try {
     const response = await axios({
@@ -89,4 +133,4 @@ const welcomeMessage = async (phoneNumberId, to) => {
   }
 };
 
-module.exports = { sendMessage, sendImage, sendAudio, welcomeMessage };
+module.exports = { sendMessage, sendImage, sendVideo, sendAudio, welcomeMessage, getImageUrl };
